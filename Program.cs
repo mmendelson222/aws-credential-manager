@@ -24,11 +24,12 @@ namespace credential_manager
                 {
                     if (showPrompt)
                     {
-                        Console.WriteLine("\nA: Add credentials");
-                        Console.WriteLine("D: Set Default Credential");
-                        Console.WriteLine("L: List profiles");
-                        Console.WriteLine("R: Remove a credential");
-                        Console.WriteLine("U: Dump");
+                        Console.WriteLine();
+                        Console.WriteLine("A: Add    stored credential");
+                        Console.WriteLine("R: Remove stored credential");
+                        Console.WriteLine("L: List   stored credentials");
+                        Console.WriteLine("D: Dump   stored credentials");
+                        Console.WriteLine("S: Set Default Credential");
                         Console.WriteLine("X: Exit\n");
                     }
 
@@ -60,7 +61,7 @@ namespace credential_manager
                                     ProfileManager.UnregisterProfile(names[id - 1]);
                                 break;
                             }
-                        case 'd':
+                        case 's':
                             {
                                 List<string> names = ListCredentials(false);
                                 int id = 0;
@@ -72,7 +73,7 @@ namespace credential_manager
                                 }
                                 break;
                             }
-                        case 'u':
+                        case 'd':
                             {
                                 ListCredentials(true);
                                 break;
