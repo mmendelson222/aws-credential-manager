@@ -170,8 +170,14 @@ namespace credential_manager
             return StringChoice(regions);
         }
 
+        /// <summary>
+        /// Allow the user to choose between the given choices, using arrow keys only.
+        /// Doesn't support a default option at the moment.
+        /// Escape key returns an empty string.
+        /// </summary>
         private static string StringChoice(List<string> choices)
         {
+            //could support default choice by passing in the index.  
             int idx = -1;
             ConsoleKey ch = ConsoleKey.NoName;
             if (idx > -1)
@@ -204,7 +210,7 @@ namespace credential_manager
                     if (idx < 0) idx = choices.Count - 1;
 
                     Console.Write(choices[idx]);
-                    int trailingBlanks = maxLength - choices[idx].Length;  //pad with spaces and reset.
+                    int trailingBlanks = maxLength - choices[idx].Length;  //pad with spaces and reset cursor location.
                     Console.Write(new String(' ', trailingBlanks));
                     Console.Write(new String('\b', trailingBlanks));
                 }
