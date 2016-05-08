@@ -53,7 +53,7 @@ namespace credential_manager
                         case 'r':
                             {
                                 Console.Write("Select credential to remove (use arrows): ");
-                                string selected = StringChoice(names);
+                                string selected = Utilities.StringChoice.Read(names);
                                 if (!string.IsNullOrEmpty(selected))
                                 {
                                     Console.WriteLine("\nRemoving " + selected);
@@ -64,7 +64,7 @@ namespace credential_manager
                         case 'd':
                             {
                                 Console.Write("Set credential as default (use arrows): ");
-                                string selected = StringChoice(names);
+                                string selected = Utilities.StringChoice.Read(names);
                                 if (!string.IsNullOrEmpty(selected))
                                 {
                                     Console.WriteLine("\nSetting default to " + selected);
@@ -176,64 +176,7 @@ namespace credential_manager
             List<string> regions = new List<string>();
             foreach (var s in RegionEndpoint.EnumerableAllRegions) regions.Add(s.SystemName);
 
-            return StringChoice(regions);
-        }
-
-        /// <summary>
-        /// Allow the user to choose between the given choices, using arrow keys only.
-        /// Doesn't support a default option at the moment.
-        /// Escape key returns an empty string.
-        /// </summary>
-        private static string StringChoice(List<string> choices)
-        {
-            //could support default choice by passing in the index.  
-            int idx = -1;
-            ConsoleKey ch = ConsoleKey.NoName;
-            if (idx > -1)
-                Console.Write(choices[idx]);
-
-            int maxLength = 0; foreach (string s in choices) maxLength = maxLength > s.Length ? maxLength : s.Length;
-            while (ch != ConsoleKey.Enter && ch != ConsoleKey.Escape)
-            {
-                ch = Console.ReadKey(true).Key;
-                if (idx > -1)
-                    Console.Write(new String('\b', choices[idx].Length)); //reset cursor
-
-                switch (ch)
-                {
-                    case ConsoleKey.UpArrow:
-                    case ConsoleKey.RightArrow:
-                        idx++;
-                        if (idx >= choices.Count) idx = 0;
-                        break;
-
-                    case ConsoleKey.DownArrow:
-                    case ConsoleKey.LeftArrow:
-                        idx--;
-                        if (idx < 0) idx = choices.Count - 1;
-                        break;
-
-                    case ConsoleKey.Escape:
-                        if (idx > -1)
-                            Console.Write(new String(' ', choices[idx].Length)); //reset cursor
-                        idx = -1;
-                        break;
-                }
-
-                if (idx > -1)
-                {
-                    Console.Write(choices[idx]);
-                    int trailingBlanks = maxLength - choices[idx].Length;  //pad with spaces and reset cursor location.
-                    Console.Write(new String(' ', trailingBlanks));
-                    Console.Write(new String('\b', trailingBlanks));
-                }
-                //Console.WriteLine(idx);
-            }
-
-            Console.WriteLine();
-            if (idx == -1)
-                return string.Empty;
-            return choices[idx];
+            return Utilities.StringChoice.Read(regions);
         }
 
         private static string ReadLine(string prompt)
