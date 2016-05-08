@@ -20,16 +20,19 @@ namespace credential_manager
             {
                 char input;
                 bool showPrompt = true;
+                List<string> names = null;
+
                 do
                 {
                     if (showPrompt)
                     {
                         Console.WriteLine();
+                        names = ListCredentials(false);
+
+                        Console.WriteLine();
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
-                        Console.WriteLine("L: List   stored credentials");
-                        Console.WriteLine("D: Dump   stored credentials");
-                        Console.WriteLine("S: Set Default Credential");
+                        Console.WriteLine("D: Set Default Credential");
                         Console.WriteLine("X: Exit\n");
                     }
 
@@ -38,11 +41,6 @@ namespace credential_manager
 
                     switch (input)
                     {
-                        case 'l':
-                            {
-                                ListCredentials(false);
-                                break;
-                            }
                         case 'a':
                             {
                                 var profileName = ReadLine("Profile name: "); if (profileName.Length == 0) break;
@@ -54,28 +52,31 @@ namespace credential_manager
                             }
                         case 'r':
                             {
-                                List<string> names = ListCredentials(false);
-                                int id = 0;
-                                int.TryParse(ReadLine("Enter ID of account to remove: "), out id);
-                                if (id > 0 && id <= names.Count)
-                                    ProfileManager.UnregisterProfile(names[id - 1]);
-                                break;
-                            }
-                        case 's':
-                            {
-                                List<string> names = ListCredentials(false);
-                                int id = 0;
-                                int.TryParse(ReadLine("set as default: "), out id);
-                                if (id > 0 && id <= names.Count)
+                                Console.Write("Select credential to remove (use arrows): ");
+                                string selected = StringChoice(names);
+                                if (!string.IsNullOrEmpty(selected))
                                 {
-                                    AWSCredentials creds = ProfileManager.GetAWSCredentials(names[id - 1]);
-                                    SetDefaultCredential(creds);
+                                    Console.WriteLine("\nRemoving " + selected);
+                                    ProfileManager.UnregisterProfile(selected);
                                 }
                                 break;
                             }
                         case 'd':
                             {
-                                ListCredentials(true);
+                                Console.Write("Set credential as default (use arrows): ");
+                                string selected = StringChoice(names);
+                                if (!string.IsNullOrEmpty(selected))
+                                {
+                                    Console.WriteLine("\nSetting default to " + selected);
+                                    AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
+                                    SetDefaultCredential(creds);
+                                }
+                                break;
+                            }
+
+                        case 'y':
+                            {
+                                ListCredentials(true); //list with details
                                 break;
                             }
                         case 'z':
@@ -148,14 +149,22 @@ namespace credential_manager
         {
             List<string> sortedNames;
             sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
-            int count = 1;
-            foreach (var profileName in sortedNames)
+
+            if (sortedNames.Count == 0)
             {
-                var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
-                if (showall)
-                    Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, creds.SecretKey));
-                else
-                    Console.WriteLine(string.Format("{0}: {1} {2}", count++, profileName, creds.AccessKey));
+                Console.WriteLine("No credentials are currently stored.  Type A to add one.");
+            }
+            else
+            {
+                Console.WriteLine("=== Stored Credetials ===");
+                foreach (var profileName in sortedNames)
+                {
+                    var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
+                    if (showall)
+                        Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, creds.SecretKey));
+                    else
+                        Console.WriteLine(string.Format("{0} {1}",profileName, creds.AccessKey));
+                }
             }
             return sortedNames;
         }
@@ -193,27 +202,32 @@ namespace credential_manager
                 switch (ch)
                 {
                     case ConsoleKey.UpArrow:
-                    case ConsoleKey.RightArrow: idx++; break;
+                    case ConsoleKey.RightArrow:
+                        idx++;
+                        if (idx >= choices.Count) idx = 0;
+                        break;
 
                     case ConsoleKey.DownArrow:
-                    case ConsoleKey.LeftArrow: idx--; break;
+                    case ConsoleKey.LeftArrow:
+                        idx--;
+                        if (idx < 0) idx = choices.Count - 1;
+                        break;
 
                     case ConsoleKey.Escape:
                         if (idx > -1)
                             Console.Write(new String(' ', choices[idx].Length)); //reset cursor
-                        idx = -1; break;
+                        idx = -1;
+                        break;
                 }
 
                 if (idx > -1)
                 {
-                    if (idx >= choices.Count) idx = 0;
-                    if (idx < 0) idx = choices.Count - 1;
-
                     Console.Write(choices[idx]);
                     int trailingBlanks = maxLength - choices[idx].Length;  //pad with spaces and reset cursor location.
                     Console.Write(new String(' ', trailingBlanks));
                     Console.Write(new String('\b', trailingBlanks));
                 }
+                //Console.WriteLine(idx);
             }
 
             Console.WriteLine();
