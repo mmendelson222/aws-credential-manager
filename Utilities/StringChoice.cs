@@ -9,30 +9,49 @@ namespace credential_manager.Utilities
     public class StringChoice
     {
         /// <summary>
+        /// shortcut method
+        /// </summary>
+        public static string Read(List<string> choices)
+        {
+            return (new Utilities.StringChoice(choices).ReadInternal());
+        }
+
+
+        List<string> choices;
+        int maxLength = 0;
+
+        int idx = -1;                       //currently selected index
+        ConsoleKey ch = ConsoleKey.NoName;  //most recent keystroke
+        ConsoleKeyInfo keyInfo;             //most recent keystroke
+        string sMatch = string.Empty;       //last successful match, or empty.
+
+
+        public StringChoice(List<string> choices)
+        {
+            this.choices = choices;
+            if (choices != null)
+                //determine max string length for display purposes.
+                foreach (string s in choices) maxLength = maxLength > s.Length ? maxLength : s.Length;
+        }
+
+
+        /// <summary>
         /// Allow the user to choose between the given choices, using arrow keys only.  
         /// Doesn't support a default option at the moment.
         /// Return key:  Select current option (or empty string if no option shown).
         /// Escape key:  Returns an empty string.
         /// </summary>
-        public static string Read(List<string> choices)
+        public string ReadInternal()
         {
-            if (choices == null || choices.Count == 0)
+            if (maxLength == 0)
             {
                 Console.WriteLine("[no options]");
                 return string.Empty;
             }
 
             //could support default choice by passing in the index.  
-            int idx = -1;
-            ConsoleKey ch = ConsoleKey.NoName;
             if (idx > -1)
                 Console.Write(choices[idx]);
-
-            //determine max string length for display purposes.
-            int maxLength = 0;
-            foreach (string s in choices) maxLength = maxLength > s.Length ? maxLength : s.Length;
-
-            string sMatch = string.Empty;
 
             while (ch != ConsoleKey.Enter && ch != ConsoleKey.Escape)
             {
@@ -41,21 +60,20 @@ namespace credential_manager.Utilities
                 if (idx > -1)
                     Console.Write(new String('\b', choices[idx].Length)); //reset cursor
 
-                //non-printable characters reset search
-                if (!IsPrintable(keyInfo.KeyChar)) sMatch = string.Empty;
-
                 switch (ch)
                 {
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.RightArrow:
                         idx++;
                         if (idx >= choices.Count) idx = 0;
+                        sMatch = string.Empty;  //reset match
                         break;
 
                     case ConsoleKey.DownArrow:
                     case ConsoleKey.LeftArrow:
                         idx--;
                         if (idx < 0) idx = choices.Count - 1;
+                        sMatch = string.Empty;  //reset match
                         break;
 
                     case ConsoleKey.Escape:
@@ -64,21 +82,15 @@ namespace credential_manager.Utilities
                         idx = -1;
                         break;
 
-                    //case ConsoleKey.Backspace:
-                    //case ConsoleKey.Delete:
-                    //    break;
+                    case ConsoleKey.Backspace:
+                    case ConsoleKey.Delete:
+                        if (sMatch.Length > 0)
+                            AttemptMatch(sMatch.Substring(0, sMatch.Length - 1));
+                        break;
 
                     default:
                         if (IsPrintable(keyInfo.KeyChar))
-                        {
-                            var tryMatch = sMatch + keyInfo.KeyChar;
-                            int matchIdx = choices.FindIndex(s => s.StartsWith(tryMatch, true, System.Globalization.CultureInfo.CurrentCulture));
-                            if (matchIdx > -1)
-                            {
-                                sMatch = tryMatch;
-                                idx = matchIdx;
-                            }
-                        }
+                            AttemptMatch(sMatch + keyInfo.KeyChar);
                         break;
                 }
 
@@ -89,13 +101,26 @@ namespace credential_manager.Utilities
                     Console.Write(new String(' ', trailingBlanks));
                     Console.Write(new String('\b', trailingBlanks));
                 }
-                //Console.WriteLine(idx);
             }
 
             Console.WriteLine();
             if (idx == -1)
                 return string.Empty;
             return choices[idx];
+        }
+
+        /// <summary>
+        /// Attempt a match with the given string.
+        /// If successful, adjust current match string and selected index.
+        /// </summary>
+        private void AttemptMatch(string tryMatch)
+        {
+            int matchIdx = choices.FindIndex(s => s.StartsWith(tryMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+            if (matchIdx > -1)
+            {
+                sMatch = tryMatch;
+                idx = matchIdx;
+            }
         }
 
         /// <summary>

@@ -81,8 +81,13 @@ namespace credential_manager
                             }
                         case 'z':
                             {
-                                string region = ReadRegion();
-                                Console.WriteLine("You chose: " + region);
+                                //List<string> choices = null;  //test case 1
+                                //List<string> choices = new List<string>(); //test case 2
+
+                                List<string> choices = new List<string>() { "one", "two", "three", "aaa", "bbb", "bbc", "bba", "ccc" };
+                                Console.Write("Make your choice: ");
+                                string selected = Utilities.StringChoice.Read(choices);
+                                Console.WriteLine("You chose: " + selected);
                                 break;
                             }
                         default:
