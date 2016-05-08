@@ -16,7 +16,8 @@ namespace credential_manager.Utilities
         /// </summary>
         public static string Read(List<string> choices)
         {
-            if (choices == null || choices.Count == 0 ){
+            if (choices == null || choices.Count == 0)
+            {
                 Console.WriteLine("[no options]");
                 return string.Empty;
             }
@@ -63,19 +64,27 @@ namespace credential_manager.Utilities
                         idx = -1;
                         break;
 
+                    //case ConsoleKey.Backspace:
+                    //case ConsoleKey.Delete:
+                    //    break;
+
                     default:
                         if (IsPrintable(keyInfo.KeyChar))
                         {
-                           sMatch += ch;
-                           int matchIdx = choices.FindIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
-                           if (matchIdx > -1) idx = matchIdx;
+                            var tryMatch = sMatch + keyInfo.KeyChar;
+                            int matchIdx = choices.FindIndex(s => s.StartsWith(tryMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+                            if (matchIdx > -1)
+                            {
+                                sMatch = tryMatch;
+                                idx = matchIdx;
+                            }
                         }
                         break;
                 }
 
                 if (idx > -1)
                 {
-                    Console.Write(choices[idx]);
+                    WriteWithHighlighting(choices[idx], sMatch.Length);
                     int trailingBlanks = maxLength - choices[idx].Length;  //pad with spaces and reset cursor location.
                     Console.Write(new String(' ', trailingBlanks));
                     Console.Write(new String('\b', trailingBlanks));
@@ -90,13 +99,27 @@ namespace credential_manager.Utilities
         }
 
         /// <summary>
+        /// write the first "length" characters reversed.
+        /// </summary>
+        static void WriteWithHighlighting(string s, int length)
+        {
+            var fg = Console.ForegroundColor;
+            var bg = Console.BackgroundColor;
+            Console.ForegroundColor = bg;
+            Console.BackgroundColor = fg;
+            Console.Write(s.Substring(0, length));
+            Console.ResetColor();
+            Console.Write(s.Substring(length));
+        }
+
+        /// <summary>
         /// Exclude backspace, CR, LF etc.  
         /// If choices include those, all bets are off.
         /// https://en.wikipedia.org/wiki/ASCII#ASCII_printable_characters
         /// </summary>
         static bool IsPrintable(char c)
         {
-            return c >= ' ' && c <= '~'; 
+            return c >= ' ' && c <= '~';
         }
     }
 }
