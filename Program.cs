@@ -32,7 +32,7 @@ namespace credential_manager
                         Console.WriteLine();
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
-                        Console.WriteLine("D: Set Default Credential");
+                        Console.WriteLine("S: Set    default credential");
                         Console.WriteLine("X: Exit\n");
                     }
 
@@ -52,7 +52,7 @@ namespace credential_manager
                             }
                         case 'r':
                             {
-                                Console.Write("Select credential to remove (use arrows): ");
+                                Console.Write("Select credential to remove (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names);
                                 if (!string.IsNullOrEmpty(selected))
                                 {
@@ -61,9 +61,9 @@ namespace credential_manager
                                 }
                                 break;
                             }
-                        case 'd':
+                        case 's':
                             {
-                                Console.Write("Set credential as default (use arrows): ");
+                                Console.Write("Set credential as default (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names);
                                 if (!string.IsNullOrEmpty(selected))
                                 {

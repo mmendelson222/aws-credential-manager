@@ -13,14 +13,12 @@ Current default account:
 Account: client1
 User:    arn:aws:iam::999999999999:user/mmendelson
 
+client1 AKIAIZZZZZZZZZZZ
+client1-codedeploy AKIAIYYYYYYYYYYYYY
+mm sandbox AKIAIXXXXXXXXXXXXXX
+
 A: Add    stored credential
 R: Remove stored credential
-L: List   stored credentials
-D: Dump   stored credentials
-S: Set Default Credential
+S: Set    default credential
 X: Exit
-
-1: client1 AKIAIZZZZZZZZZZZ
-2: client1-codedeploy AKIAIYYYYYYYYYYYYY
-3: mm sandbox AKIAIXXXXXXXXXXXXXX
 ```
