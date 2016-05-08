@@ -86,7 +86,7 @@ namespace credential_manager
 
                                 List<string> choices = new List<string>() { "one", "two", "three", "aaa", "bbb", "bbc", "bba", "ccc" };
                                 Console.Write("Make your choice: ");
-                                string selected = Utilities.StringChoice.Read(choices);
+                                string selected = Utilities.StringChoice.Read(choices, 2);
                                 Console.WriteLine("You chose: " + selected);
                                 break;
                             }
@@ -181,7 +181,7 @@ namespace credential_manager
             List<string> regions = new List<string>();
             foreach (var s in RegionEndpoint.EnumerableAllRegions) regions.Add(s.SystemName);
 
-            return Utilities.StringChoice.Read(regions);
+            return Utilities.StringChoice.Read(regions, 0);
         }
 
         private static string ReadLine(string prompt)

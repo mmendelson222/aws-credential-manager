@@ -16,6 +16,11 @@ namespace credential_manager.Utilities
             return (new Utilities.StringChoice(choices).ReadInternal());
         }
 
+        public static string Read(List<string> choices, int defaultChoice)
+        {
+            return (new Utilities.StringChoice(choices) { idx = defaultChoice }).ReadInternal();
+        }
+
         List<string> choices;
         int maxLength = 0;
 
@@ -32,7 +37,7 @@ namespace credential_manager.Utilities
 
         /// <summary>
         /// Allow the user to choose between the given choices, using arrow keys or by typing the first few characters.  
-        /// Doesn't support a default option at the moment.
+        /// Set idx for default option. 
         /// Return key:  Select current option (or empty string if no option shown).
         /// Escape key:  Returns an empty string.
         /// </summary>
@@ -44,68 +49,60 @@ namespace credential_manager.Utilities
                 return string.Empty;
             }
 
-            try
-            {
-                //could support default choice by passing in the index.  
-                string currentChoice;
-                ConsoleKey ch = ConsoleKey.NoName;
+            string currentChoice;
+            ConsoleKey ch = ConsoleKey.NoName;
 
-                while (ch != ConsoleKey.Enter && ch != ConsoleKey.Escape)
+            while (ch != ConsoleKey.Enter && ch != ConsoleKey.Escape)
+            {
+                currentChoice = idx == -1 ? string.Empty : choices[idx];
+                WriteString(currentChoice);
+
+                var keyInfo = Console.ReadKey(true);
+                ch = keyInfo.Key;
+                Console.Write(new String('\b', currentChoice.Length));  //note: cursor at start of string. 
+
+                switch (ch)
                 {
-                    currentChoice = idx == -1 ? string.Empty : choices[idx];
-                    WriteString(currentChoice);
+                    case ConsoleKey.UpArrow:
+                    case ConsoleKey.RightArrow:
+                        idx++;
+                        if (idx >= choices.Count) idx = 0;
+                        sMatch = string.Empty;  //reset match
+                        break;
 
-                    var keyInfo = Console.ReadKey(true);
-                    ch = keyInfo.Key;
-                    Console.Write(new String('\b', currentChoice.Length));  //note: cursor at start of string. 
+                    case ConsoleKey.DownArrow:
+                    case ConsoleKey.LeftArrow:
+                        idx--;
+                        if (idx < 0) idx = choices.Count - 1;
+                        sMatch = string.Empty;  //reset match
+                        break;
 
-                    switch (ch)
-                    {
-                        case ConsoleKey.UpArrow:
-                        case ConsoleKey.RightArrow:
-                            idx++;
-                            if (idx >= choices.Count) idx = 0;
-                            sMatch = string.Empty;  //reset match
-                            break;
+                    case ConsoleKey.Escape:
+                        if (idx > -1)
+                            Console.Write(new String(' ', choices[idx].Length)); //reset cursor
+                        idx = -1;
+                        break;
 
-                        case ConsoleKey.DownArrow:
-                        case ConsoleKey.LeftArrow:
-                            idx--;
-                            if (idx < 0) idx = choices.Count - 1;
-                            sMatch = string.Empty;  //reset match
-                            break;
+                    case ConsoleKey.Backspace:
+                    case ConsoleKey.Delete:
+                        if (sMatch.Length > 0)
+                        {
+                            AttemptMatch(sMatch.Substring(0, sMatch.Length - 1));
+                            if (sMatch.Length == 0) idx = -1;  //expected behavior: nothing selected
+                        }
+                        break;
 
-                        case ConsoleKey.Escape:
-                            if (idx > -1)
-                                Console.Write(new String(' ', choices[idx].Length)); //reset cursor
-                            idx = -1;
-                            break;
-
-                        case ConsoleKey.Backspace:
-                        case ConsoleKey.Delete:
-                            if (sMatch.Length > 0)
-                            {
-                                AttemptMatch(sMatch.Substring(0, sMatch.Length - 1));
-                                if (sMatch.Length == 0) idx = -1;  //expected behavior: nothing selected
-                            }
-                            break;
-
-                        default:
-                            if (IsPrintable(keyInfo.KeyChar))
-                            {
-                                AttemptMatch(sMatch + keyInfo.KeyChar);
-                            }
-                            break;
-                    }
+                    default:
+                        if (IsPrintable(keyInfo.KeyChar))
+                        {
+                            AttemptMatch(sMatch + keyInfo.KeyChar);
+                        }
+                        break;
                 }
+            }
 
-                Console.WriteLine();
-                return idx == -1 ? string.Empty : choices[idx];
-            }
-            finally
-            {
-                Console.CursorVisible = true;
-            }
+            Console.WriteLine();
+            return idx == -1 ? string.Empty : choices[idx];
         }
 
         /// <summary>
@@ -117,7 +114,6 @@ namespace credential_manager.Utilities
             int trailingBlanks = maxLength - currentChoice.Length;  //pad with spaces and reset cursor location.
             Console.Write(new String(' ', trailingBlanks));
             Console.Write(new String('\b', trailingBlanks));  //reset cursor to end of current choice. 
-            Console.CursorVisible = string.IsNullOrEmpty(currentChoice);
         }
 
         /// <summary>
