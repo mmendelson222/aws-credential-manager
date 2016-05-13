@@ -46,7 +46,6 @@ namespace credential_manager
                                 var profileName = ReadLine("Profile name: "); if (profileName.Length == 0) break;
                                 var accessKey = ReadLine("Access key: "); if (accessKey.Length == 0) break;
                                 var secretKey = ReadLine("Secret key: "); if (secretKey.Length == 0) break;
-                                var region = ReadRegion();
                                 ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
                                 break;
                             }
@@ -71,6 +70,21 @@ namespace credential_manager
                                     AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
                                     SetDefaultCredential(creds);
                                 }
+                                break;
+                            }
+
+                        //push credential to named credential
+                        case 'p':
+                            {
+                                Console.Write("Select credential to push (use arrows or type): ");
+                                string selected = Utilities.StringChoice.Read(names);
+                                if (!string.IsNullOrEmpty(selected))
+                                {
+                                    //var region = ReadRegion();
+                                    AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
+                                    AddStoredCredential(creds, selected);
+                                }
+
                                 break;
                             }
 
@@ -127,8 +141,10 @@ namespace credential_manager
 
         private static void AddStoredCredential(AWSCredentials creds, string profileName)
         {
-            RunConfigure(creds, string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, profileName));
-            RunConfigure(creds, string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, profileName));
+            string niceProfile = profileName.Replace(' ', '-');
+            Console.WriteLine("Pushing credential " + niceProfile);
+            RunConfigure(creds, string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, niceProfile));
+            RunConfigure(creds, string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, niceProfile));
         }
 
         private static void SetDefaultCredential(AWSCredentials creds)
@@ -137,6 +153,12 @@ namespace credential_manager
             RunConfigure(creds, string.Format("set aws_secret_access_key {0}", creds.GetCredentials().SecretKey));
         }
 
+
+        /// <summary>
+        /// Note: faul
+        /// </summary>
+        /// <param name="creds"></param>
+        /// <param name="operation"></param>
         private static void RunConfigure(AWSCredentials creds, string operation)
         {
             Process p = new Process();
@@ -147,6 +169,8 @@ namespace credential_manager
             p.Start();
             string strOutput = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
+            if (p.ExitCode != 0)
+                Console.WriteLine(string.Format("Command failed.  Exit code was {0}", p.ExitCode));
             if (!string.IsNullOrEmpty(strOutput)) Console.WriteLine(strOutput);
         }
 

@@ -8,12 +8,32 @@ namespace credential_manager.Utilities
 {
     public class StringChoice
     {
+        public static object Read(Dictionary<string, object> choices)
+        {
+            var selected = Read(choices.Keys.ToList());
+            if (string.IsNullOrEmpty(selected)) return null;
+            return choices[selected];
+        }
+
         /// <summary>
         /// shortcut method
         /// </summary>
         public static string Read(List<string> choices)
         {
             return (new Utilities.StringChoice(choices).ReadInternal());
+        }
+
+        public static string Read(List<string> choices, string defaultChoice)
+        {
+            int selected = -1;
+            for (int count = 0; count < choices.Count; count++)
+                if (defaultChoice == choices[count])
+                    selected = count;
+
+            if (selected < 0)
+                return Read(choices);
+            else
+                return (new Utilities.StringChoice(choices) { idx = selected }).ReadInternal();
         }
 
         public static string Read(List<string> choices, int defaultChoice)
@@ -101,8 +121,9 @@ namespace credential_manager.Utilities
                 }
             }
 
-            Console.WriteLine();
-            return idx == -1 ? string.Empty : choices[idx];
+            string selected = idx == -1 ? null : choices[idx];
+            Console.WriteLine(selected);
+            return selected;
         }
 
         /// <summary>
