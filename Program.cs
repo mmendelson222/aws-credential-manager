@@ -33,6 +33,7 @@ namespace credential_manager
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
                         Console.WriteLine("S: Set    default credential");
+                        Console.WriteLine("P: Push   to named credential");
                         Console.WriteLine("X: Exit\n");
                     }
 

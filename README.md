@@ -7,6 +7,7 @@ Features:
 1. On startup, uses IAM api to determine the default credential set currently in use.
 1. Maintains a named list of credentials.  View list, add or remove from this list.
 1. Allows you to set the default credential, using a wrapper for aws configure. 
+1. Set a named credential, using a wrapper for aws configure. 
 
 ```
 Current default account:
@@ -20,5 +21,6 @@ mm sandbox AKIAIXXXXXXXXXXXXXX
 A: Add    stored credential
 R: Remove stored credential
 S: Set    default credential
+P: Push   to named credential
 X: Exit
 ```
