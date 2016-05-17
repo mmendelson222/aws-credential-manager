@@ -89,11 +89,15 @@ namespace credential_manager
                                 break;
                             }
 
+                        //version info
+                        case 'v':
+                            Console.WriteLine(VersionInfo);
+                            break;
+
                         case 'y':
-                            {
-                                ListCredentials(true); //list with details
-                                break;
-                            }
+                            ListCredentials(true); //list with details
+                            break;
+
                         case 'z':
                             {
                                 //List<string> choices = null;  //test case 1
@@ -193,7 +197,7 @@ namespace credential_manager
                     if (showall)
                         Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, creds.SecretKey));
                     else
-                        Console.WriteLine(string.Format("{0} {1}",profileName, creds.AccessKey));
+                        Console.WriteLine(string.Format("{0} {1}", profileName, creds.AccessKey));
                 }
             }
             return sortedNames;
@@ -213,6 +217,20 @@ namespace credential_manager
         {
             Console.Write(prompt);
             return Console.ReadLine();
+        }
+
+        public static string VersionInfo
+        {
+            get
+            {
+                //add version/build date
+                System.Reflection.Assembly asm = System.Reflection.Assembly.GetExecutingAssembly();
+                Version v = asm.GetName().Version;
+                DateTime bdt = new DateTime(2000, 1, 1);
+                bdt = bdt.AddDays(Convert.ToInt32(v.Build));
+                bdt = bdt.AddSeconds(Convert.ToInt32(v.Revision) * 2);
+                return string.Format("{2} Version {0}, built {1}", v, bdt.ToString("MM/dd/yy"), asm.GetName().Name);  // h:mm tt
+            }
         }
     }
 }
