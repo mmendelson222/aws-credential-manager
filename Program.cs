@@ -85,7 +85,7 @@ namespace credential_manager
                                 if (!string.IsNullOrEmpty(selected))
                                 {
                                     AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
-                                    ReportWhois(selected, creds);
+                                    ReportWhois(creds);
                                     showPrompt = false;
                                 }
                                 break;
@@ -152,11 +152,10 @@ namespace credential_manager
         /// <summary>
         /// note: this can only be done once per session. 
         /// </summary>
-        private static void ReportWhois(string name, AWSCredentials creds)
+        private static void ReportWhois(AWSCredentials creds)
         {
             try
             {
-                Console.WriteLine(string.Format("AWS info for account {0}:", name));
                 Console.WriteLine(Operations.IamOperations.UserInfo(creds));
                 Console.WriteLine();
             }

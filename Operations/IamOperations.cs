@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace credential_manager.Operations
@@ -21,7 +22,13 @@ namespace credential_manager.Operations
             }
             catch (AmazonIdentityManagementServiceException e)
             {
-                meta.UserArn = e.Message;
+                var match = Regex.Match(e.Message, @"arn:aws:iam::(\d{12}):user/(\S*)");
+                if (match.Success)
+                    //get the ARN anyway, from the error message
+                    meta.UserArn = match.ToString();
+                else 
+                    //show the whole error message
+                    meta.UserArn = e.Message;
             }
 
             try
@@ -31,7 +38,13 @@ namespace credential_manager.Operations
             }
             catch (AmazonIdentityManagementServiceException e)
             {
-                meta.AccountAlias = e.Message;
+                int notAuth = e.Message.IndexOf("not authorized");
+                if (notAuth < 0)
+                    //show the whole error message
+                    meta.AccountAlias = e.Message;
+                else
+                    //just shorten the string.
+                    meta.AccountAlias = e.Message.Substring(notAuth);  
             }
 
             return meta;
