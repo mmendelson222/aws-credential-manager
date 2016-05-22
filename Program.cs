@@ -214,6 +214,11 @@ namespace credential_manager
         {
             List<string> sortedNames;
             sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
+            int maxLength = sortedNames.Max(n => n.Length);
+
+            string fmt1 = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}", maxLength, new string(' ', maxLength));
+            string fmt2 = string.Format("{{0,-{0}}} {{1}} {{2}}", maxLength);
+
 
             if (sortedNames.Count == 0)
             {
@@ -235,9 +240,9 @@ namespace credential_manager
                     }
 
                     if (showall)
-                        Console.WriteLine(string.Format("{0} {1} {2} {3}", profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
+                        Console.WriteLine(string.Format(fmt1, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
                     else
-                        Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, defaultIndicator));
+                        Console.WriteLine(string.Format(fmt2, profileName, creds.AccessKey, defaultIndicator));
                 }
             }
             return sortedNames;
