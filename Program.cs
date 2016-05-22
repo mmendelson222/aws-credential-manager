@@ -12,10 +12,10 @@ namespace credential_manager
 {
     class Program
     {
+        static string defaultCredName;
+
         static void Main(string[] args)
         {
-            ReportDefault();
-
             try
             {
                 char input;
@@ -35,6 +35,7 @@ namespace credential_manager
                         Console.WriteLine("R: Remove stored credential");
                         Console.WriteLine("S: Set    default credential");
                         Console.WriteLine("P: Push   to named credential");
+                        Console.WriteLine("W: Whois  IAM user associated named credential");
                         Console.WriteLine("X: Exit\n");
                     }
 
@@ -71,6 +72,21 @@ namespace credential_manager
                                     Console.WriteLine("\nSetting default to " + selected);
                                     AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
                                     SetDefaultCredential(creds);
+                                }
+                                break;
+                            }
+
+                        //whois information on a credential (select)
+                        //should default to current default
+                        case 'w':
+                            {
+                                Console.Write("Choose credential (use arrows or type): ");
+                                string selected = Utilities.StringChoice.Read(names, defaultCredName);
+                                if (!string.IsNullOrEmpty(selected))
+                                {
+                                    AWSCredentials creds = ProfileManager.GetAWSCredentials(selected);
+                                    ReportWhois(selected, creds);
+                                    showPrompt = false;
                                 }
                                 break;
                             }
@@ -136,12 +152,13 @@ namespace credential_manager
         /// <summary>
         /// note: this can only be done once per session. 
         /// </summary>
-        private static void ReportDefault()
+        private static void ReportWhois(string name, AWSCredentials creds)
         {
             try
             {
-                Console.WriteLine("Current default account:");
-                Console.WriteLine(Operations.IamOperations.UserInfo());
+                Console.WriteLine(string.Format("AWS info for account {0}:", name));
+                Console.WriteLine(Operations.IamOperations.UserInfo(creds));
+                Console.WriteLine();
             }
             catch (Exception ex)
             {
@@ -153,23 +170,31 @@ namespace credential_manager
         {
             string niceProfile = profileName.Replace(' ', '-');
             Console.WriteLine("Pushing credential " + niceProfile);
-            RunConfigure(creds, string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, niceProfile));
-            RunConfigure(creds, string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, niceProfile));
+            RunConfigure(string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, niceProfile), true);
+            RunConfigure(string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, niceProfile), true);
         }
 
         private static void SetDefaultCredential(AWSCredentials creds)
         {
-            RunConfigure(creds, string.Format("set aws_access_key_id {0}", creds.GetCredentials().AccessKey));
-            RunConfigure(creds, string.Format("set aws_secret_access_key {0}", creds.GetCredentials().SecretKey));
+            RunConfigure(string.Format("set aws_access_key_id {0}", creds.GetCredentials().AccessKey), true);
+            RunConfigure(string.Format("set aws_secret_access_key {0}", creds.GetCredentials().SecretKey), true);
         }
 
+        /// <summary>
+        /// get the default credential, or empty string if none
+        /// </summary>
+        private static string GetDefaultCredential()
+        {
+            string cmd = "get aws_access_key_id";
+            return  RunConfigure(cmd, false).Trim();
+        }
 
         /// <summary>
         /// Note: faul
         /// </summary>
         /// <param name="creds"></param>
         /// <param name="operation"></param>
-        private static void RunConfigure(AWSCredentials creds, string operation)
+        private static string RunConfigure(string operation, bool showStdOut)
         {
             Process p = new Process();
             p.StartInfo.UseShellExecute = false;
@@ -181,7 +206,9 @@ namespace credential_manager
             p.WaitForExit();
             if (p.ExitCode != 0)
                 Console.WriteLine(string.Format("Command failed.  Exit code was {0}", p.ExitCode));
-            if (!string.IsNullOrEmpty(strOutput)) Console.WriteLine(strOutput);
+            if (!string.IsNullOrEmpty(strOutput) && showStdOut) 
+                Console.WriteLine(strOutput);
+            return strOutput;
         }
 
         private static List<string> ListCredentials(bool showall)
@@ -195,14 +222,23 @@ namespace credential_manager
             }
             else
             {
+                var currentDefaultCredential = GetDefaultCredential();
+
                 Console.WriteLine("=== Stored Credetials ===");
                 foreach (var profileName in sortedNames)
                 {
                     var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
+                    string defaultIndicator = string.Empty;
+                    if (creds.AccessKey == currentDefaultCredential)
+                    {
+                        defaultCredName = profileName;
+                        defaultIndicator = " (default)";
+                    }
+
                     if (showall)
-                        Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, creds.SecretKey));
+                        Console.WriteLine(string.Format("{0} {1} {2} {3}", profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
                     else
-                        Console.WriteLine(string.Format("{0} {1}", profileName, creds.AccessKey));
+                        Console.WriteLine(string.Format("{0} {1} {2}", profileName, creds.AccessKey, defaultIndicator));
                 }
             }
             return sortedNames;

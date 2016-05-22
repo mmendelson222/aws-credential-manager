@@ -10,10 +10,10 @@ namespace credential_manager.Operations
 {
     class IamOperations
     {
-        static internal UserMetadata UserInfo()
+        internal static object UserInfo(Amazon.Runtime.AWSCredentials creds)
         {
             UserMetadata meta = new UserMetadata();
-            AmazonIdentityManagementServiceClient iamClient = new AmazonIdentityManagementServiceClient();
+            AmazonIdentityManagementServiceClient iamClient = new AmazonIdentityManagementServiceClient(creds);
             try
             {
                 GetUserResponse response = iamClient.GetUser();
