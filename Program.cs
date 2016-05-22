@@ -21,13 +21,14 @@ namespace credential_manager
                 char input;
                 bool showPrompt = true;
                 List<string> names = null;
+                bool showCredentialSecret = false;
 
                 do
                 {
                     if (showPrompt)
                     {
                         Console.WriteLine();
-                        names = ListCredentials(false);
+                        names = ListCredentials(showCredentialSecret);
 
                         Console.WriteLine();
                         Console.WriteLine("A: Add    stored credential");
@@ -88,6 +89,10 @@ namespace credential_manager
 
                                 break;
                             }
+
+                        case 'l':
+                            showCredentialSecret = !showCredentialSecret;
+                            break;
 
                         //version info
                         case 'v':
