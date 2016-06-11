@@ -149,9 +149,6 @@ namespace credential_manager
             }
         }
 
-        /// <summary>
-        /// note: this can only be done once per session. 
-        /// </summary>
         private static void ReportWhois(AWSCredentials creds)
         {
             try
