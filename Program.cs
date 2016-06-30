@@ -34,8 +34,8 @@ namespace credential_manager
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
                         Console.WriteLine("S: Set    default credential");
-                        Console.WriteLine("P: Push   to named credential");
-                        Console.WriteLine("W: Whois  IAM user associated named credential");
+                        Console.WriteLine("P: Push   to a Named Profile");
+                        Console.WriteLine("W: Whois  the associated IAM user");
                         Console.WriteLine("X: Exit\n");
                     }
 
@@ -64,6 +64,7 @@ namespace credential_manager
                                 break;
                             }
                         case 's':
+                        case 'd':
                             {
                                 Console.Write("Set credential as default (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names);
@@ -118,12 +119,12 @@ namespace credential_manager
                         case 'y':
                             ListCredentials(true); //list with details
                             break;
-
+                        
+                        //test
                         case 'z':
                             {
                                 //List<string> choices = null;  //test case 1
                                 //List<string> choices = new List<string>(); //test case 2
-
                                 List<string> choices = new List<string>() { "one", "two", "three", "aaa", "bbb", "bbc", "bba", "ccc" };
                                 Console.Write("Make your choice: ");
                                 string selected = Utilities.StringChoice.Read(choices, 2);
@@ -186,10 +187,8 @@ namespace credential_manager
         }
 
         /// <summary>
-        /// Note: faul
+        /// Run an aws configure operation. 
         /// </summary>
-        /// <param name="creds"></param>
-        /// <param name="operation"></param>
         private static string RunConfigure(string operation, bool showStdOut)
         {
             Process p = new Process();
@@ -225,7 +224,7 @@ namespace credential_manager
             {
                 var currentDefaultCredential = GetDefaultCredential();
 
-                Console.WriteLine("=== Stored Credetials ===");
+                Console.WriteLine("=== Stored Credentials ===");
                 foreach (var profileName in sortedNames)
                 {
                     var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
