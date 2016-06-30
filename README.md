@@ -13,7 +13,7 @@ Features:
 ```
 === Stored Credetials ===
 client1           AKIAIZZZZZZZZZZZZZZZ
-loreal            AKIAIYYYYYYYYYYYYYYY  (default)
+anotherclient     AKIAIYYYYYYYYYYYYYYY  (default)
 mm sandbox        AKIAIAAAAAAAAAAAAAAA
 
 A: Add    stored credential
