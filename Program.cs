@@ -33,20 +33,22 @@ namespace credential_manager
                         Console.WriteLine();
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
+                        Console.WriteLine("U: Update stored credential");
                         Console.WriteLine("S: Set    default credential");
                         Console.WriteLine("P: Push   to a Named Profile");
                         Console.WriteLine("W: Whois  the associated IAM user");
                         Console.WriteLine("X: Exit\n");
                     }
 
-                    input = Console.ReadKey(true).KeyChar.ToString().ToLower()[0];
+                    var keyInfo = Console.ReadKey(true);
+                    input = keyInfo.KeyChar.ToString().ToLower()[0];
                     showPrompt = true;
 
                     switch (input)
                     {
                         case 'a':
                             {
-                                var profileName = ReadLine("Profile name: "); if (profileName.Length == 0) break;
+                                var profileName = ReadLine("New profile name: "); if (profileName.Length == 0) break;
                                 var accessKey = ReadLine("Access key: "); if (accessKey.Length == 0) break;
                                 var secretKey = ReadLine("Secret key: "); if (secretKey.Length == 0) break;
                                 ProfileManager.RegisterProfile(profileName, accessKey, secretKey);
@@ -61,6 +63,16 @@ namespace credential_manager
                                     Console.WriteLine("\nRemoving " + selected);
                                     ProfileManager.UnregisterProfile(selected);
                                 }
+                                break;
+                            }
+                        case 'u':
+                            {
+                                Console.Write("Update profile (use arrows or type): ");
+                                string selected = Utilities.StringChoice.Read(names); if (string.IsNullOrEmpty(selected)) break;
+                                var accessKey = ReadLine("Access key: "); if (accessKey.Length == 0) break;
+                                var secretKey = ReadLine("Secret key: "); if (secretKey.Length == 0) break;
+                                ProfileManager.UnregisterProfile(selected);
+                                ProfileManager.RegisterProfile(selected, accessKey, secretKey);
                                 break;
                             }
                         case 's':
@@ -108,7 +120,8 @@ namespace credential_manager
                             }
 
                         case 'l':
-                            showCredentialSecret = !showCredentialSecret;
+                            if (keyInfo.Modifiers == ConsoleModifiers.Control)
+                                showCredentialSecret = !showCredentialSecret;
                             break;
 
                         //version info
@@ -116,10 +129,6 @@ namespace credential_manager
                             Console.WriteLine(VersionInfo);
                             break;
 
-                        case 'y':
-                            ListCredentials(true); //list with details
-                            break;
-                        
                         //test
                         case 'z':
                             {
@@ -183,7 +192,7 @@ namespace credential_manager
         private static string GetDefaultCredential()
         {
             string cmd = "get aws_access_key_id";
-            return  RunConfigure(cmd, false).Trim();
+            return RunConfigure(cmd, false).Trim();
         }
 
         /// <summary>
@@ -201,7 +210,7 @@ namespace credential_manager
             p.WaitForExit();
             if (p.ExitCode != 0)
                 Console.WriteLine(string.Format("Command failed.  Exit code was {0}", p.ExitCode));
-            if (!string.IsNullOrEmpty(strOutput) && showStdOut) 
+            if (!string.IsNullOrEmpty(strOutput) && showStdOut)
                 Console.WriteLine(strOutput);
             return strOutput;
         }
