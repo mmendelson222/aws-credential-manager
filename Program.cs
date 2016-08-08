@@ -69,10 +69,22 @@ namespace credential_manager
                             {
                                 Console.Write("Update profile (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names); if (string.IsNullOrEmpty(selected)) break;
+
+                                //Determine if the cred being changed  is the default
+                                var isDefault = ProfileManager.GetAWSCredentials(selected).GetCredentials().AccessKey == GetDefaultCredential();
+
                                 var accessKey = ReadLine("Access key: "); if (accessKey.Length == 0) break;
                                 var secretKey = ReadLine("Secret key: "); if (secretKey.Length == 0) break;
                                 ProfileManager.UnregisterProfile(selected);
                                 ProfileManager.RegisterProfile(selected, accessKey, secretKey);
+
+                                //if it was a default credential, automatically reset it. 
+                                if (isDefault)
+                                {
+                                    Console.WriteLine("\nRestting default credential.");
+                                    SetDefaultCredential(ProfileManager.GetAWSCredentials(selected));
+                                }
+
                                 break;
                             }
                         case 's':
