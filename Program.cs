@@ -41,7 +41,7 @@ namespace credential_manager
                     }
 
                     var keyInfo = Console.ReadKey(true);
-                    input = keyInfo.KeyChar.ToString().ToLower()[0];
+                    input = keyInfo.Key.ToString().ToLower()[0];
                     showPrompt = true;
 
                     switch (input)
