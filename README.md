@@ -35,3 +35,11 @@ Profile name: newprofile
 Access key: AAAAAAAAAAAAAAAAAAAA
 Secret key: BBBBBBBBBBBBBBBBBBBBBBB
 ```
+## Note on default credentials
+If one of the credentials listed by the credential manager is called "default", this will be picked up by the AWS API, but NOT by the command line.  
+
+To explain, this app stores credentials in two different places: 
+ 1. As "named credentials" - You're setting this any time you choose the default or "push to a named credential".  These are plain text (don't shoot the messenger) and are at %USERPROFILE%\.aws\credentials.   A "default" here is seen by both the CLI and the AWS API. 
+ 1. Using the AWS API's ProfileManager utilities - This is the main list that is displayed, and these are encrypted and stored at %LOCALAPPDATA%/AWSToolkit/RegisteredAccounts.json.   If you set a "default" here, it is only seen by the AWS API, but takes priority over the other one.
+
+The simplest solution is to keep only one default: A "named credential" which will be picked up by both the cli and the api. 

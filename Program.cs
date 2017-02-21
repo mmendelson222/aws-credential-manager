@@ -13,6 +13,7 @@ namespace credential_manager
     class Program
     {
         static string defaultCredName;
+        const string MY_URL = "http://bit.ly/2kJ2J42";
 
         static void Main(string[] args)
         {
@@ -81,7 +82,7 @@ namespace credential_manager
                                 //if it was a default credential, automatically reset it. 
                                 if (isDefault)
                                 {
-                                    Console.WriteLine("\nRestting default credential.");
+                                    Console.WriteLine("\nResetting default credential.");
                                     SetDefaultCredential(ProfileManager.GetAWSCredentials(selected));
                                 }
 
@@ -139,6 +140,7 @@ namespace credential_manager
                         //version info
                         case 'v':
                             Console.WriteLine(VersionInfo);
+                            showPrompt = false;
                             break;
 
                         //test
@@ -188,14 +190,14 @@ namespace credential_manager
         {
             string niceProfile = profileName.Replace(' ', '-');
             Console.WriteLine("Pushing credential " + niceProfile);
-            RunConfigure(string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, niceProfile), true);
-            RunConfigure(string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, niceProfile), true);
+            RunConfigure(string.Format("set aws_access_key_id {0} --profile {1}", creds.GetCredentials().AccessKey, niceProfile), true, false);
+            RunConfigure(string.Format("set aws_secret_access_key {0} --profile {1}", creds.GetCredentials().SecretKey, niceProfile), true, false);
         }
 
         private static void SetDefaultCredential(AWSCredentials creds)
         {
-            RunConfigure(string.Format("set aws_access_key_id {0}", creds.GetCredentials().AccessKey), true);
-            RunConfigure(string.Format("set aws_secret_access_key {0}", creds.GetCredentials().SecretKey), true);
+            RunConfigure(string.Format("set aws_access_key_id {0}", creds.GetCredentials().AccessKey), true, false);
+            RunConfigure(string.Format("set aws_secret_access_key {0}", creds.GetCredentials().SecretKey), true, false);
         }
 
         /// <summary>
@@ -204,13 +206,13 @@ namespace credential_manager
         private static string GetDefaultCredential()
         {
             string cmd = "get aws_access_key_id";
-            return RunConfigure(cmd, false).Trim();
+            return RunConfigure(cmd, false, true).Trim();
         }
 
         /// <summary>
         /// Run an aws configure operation. 
         /// </summary>
-        private static string RunConfigure(string operation, bool showStdOut)
+        private static string RunConfigure(string operation, bool showStdOut, bool bailOnfail)
         {
             Process p = new Process();
             p.StartInfo.UseShellExecute = false;
@@ -221,7 +223,12 @@ namespace credential_manager
             string strOutput = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
             if (p.ExitCode != 0)
-                Console.WriteLine(string.Format("Command failed.  Exit code was {0}", p.ExitCode));
+            {
+                if (bailOnfail)
+                    return string.Empty;
+                else
+                    Console.WriteLine(string.Format("AWS configure command failed.  Exit code was {0}", p.ExitCode));
+            }
             if (!string.IsNullOrEmpty(strOutput) && showStdOut)
                 Console.WriteLine(strOutput);
             return strOutput;
@@ -236,7 +243,6 @@ namespace credential_manager
             string fmt1 = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}", maxLength, new string(' ', maxLength));
             string fmt2 = string.Format("{{0,-{0}}} {{1}} {{2}}", maxLength);
 
-
             if (sortedNames.Count == 0)
             {
                 Console.WriteLine("No credentials are currently stored.  Type A to add one.");
@@ -250,10 +256,14 @@ namespace credential_manager
                 {
                     var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
                     string defaultIndicator = string.Empty;
-                    if (creds.AccessKey == currentDefaultCredential)
+                    if (string.Compare(profileName, "default", true) == 0)
+                    {
+                        defaultIndicator = string.Format("Careful!\n{0} See note on defaults: {1}", new string(' ', maxLength), MY_URL);
+                    }
+                    else if (creds.AccessKey == currentDefaultCredential)
                     {
                         defaultCredName = profileName;
-                        defaultIndicator = " (default)";
+                        defaultIndicator = "(default)";
                     }
 
                     if (showall)
@@ -291,7 +301,10 @@ namespace credential_manager
                 DateTime bdt = new DateTime(2000, 1, 1);
                 bdt = bdt.AddDays(Convert.ToInt32(v.Build));
                 bdt = bdt.AddSeconds(Convert.ToInt32(v.Revision) * 2);
-                return string.Format("{2} Version {0}, built {1}", v, bdt.ToString("MM/dd/yy"), asm.GetName().Name);  // h:mm tt
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat("{2} Version {0}, built {1}\n", v, bdt.ToString("MM/dd/yy"), asm.GetName().Name);  // h:mm tt
+                sb.AppendFormat("Written by Michael Mendelson.  Find the code at at {0}\n", MY_URL);
+                return sb.ToString();
             }
         }
     }
