@@ -31,7 +31,12 @@ namespace credential_manager
                         Console.WriteLine();
                         names = ListCredentials(showCredentialSecret);
 
-                        Console.WriteLine();
+                        //Console.WriteLine();
+                        //Console.WriteLine("Stored credentials: Add, Remove, Update, rEname");
+                        //Console.WriteLine("Named profiles:     Set Default, Push");
+                        //Console.WriteLine("Whois");
+                        //Console.WriteLine("X: Exit\n");
+
                         Console.WriteLine("A: Add    stored credential");
                         Console.WriteLine("R: Remove stored credential");
                         Console.WriteLine("U: Update stored credential");
@@ -39,6 +44,14 @@ namespace credential_manager
                         Console.WriteLine("P: Push   to a Named Profile");
                         Console.WriteLine("W: Whois  the associated IAM user");
                         Console.WriteLine("X: Exit\n");
+
+                        //Console.WriteLine("A: Add    stored credential");
+                        //Console.WriteLine("R: Remove stored credential");
+                        //Console.WriteLine("U: Update stored credential");
+                        //Console.WriteLine("S: Set    default credential");
+                        //Console.WriteLine("P: Push   to a Named Profile");
+                        //Console.WriteLine("W: Whois  the associated IAM user");
+                        //Console.WriteLine("X: Exit\n");
                     }
 
                     var keyInfo = Console.ReadKey(true);
@@ -66,9 +79,23 @@ namespace credential_manager
                                 }
                                 break;
                             }
+                        case 'e':
+                            {
+                                Console.Write("Rename credential (use arrows or type): ");
+                                string selected = Utilities.StringChoice.Read(names);
+                                var newName = ReadLine("Rename to: "); if (newName.Length == 0) break;
+                                if (!string.IsNullOrEmpty(selected))
+                                {
+                                    //create new one credential, delete old one.
+                                    var olcCredential = ProfileManager.GetAWSCredentials(selected).GetCredentials();
+                                    ProfileManager.RegisterProfile(newName, olcCredential.AccessKey, olcCredential.SecretKey);
+                                    ProfileManager.UnregisterProfile(selected);
+                                }
+                                break;
+                            }
                         case 'u':
                             {
-                                Console.Write("Update profile (use arrows or type): ");
+                                Console.Write("Update credential (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names); if (string.IsNullOrEmpty(selected)) break;
 
                                 //Determine if the cred being changed  is the default
@@ -288,7 +315,8 @@ namespace credential_manager
         private static string ReadLine(string prompt)
         {
             Console.Write(prompt);
-            return Console.ReadLine();
+            var s = Console.ReadLine();
+            return s.Trim();
         }
 
         public static string VersionInfo
