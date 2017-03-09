@@ -83,14 +83,14 @@ namespace credential_manager.Utilities
 
                 switch (ch)
                 {
-                    case ConsoleKey.UpArrow:
+                    case ConsoleKey.DownArrow:
                     case ConsoleKey.RightArrow:
                         idx++;
                         if (idx >= choices.Count) idx = 0;
                         sMatch = string.Empty;  //reset match
                         break;
 
-                    case ConsoleKey.DownArrow:
+                    case ConsoleKey.UpArrow:
                     case ConsoleKey.LeftArrow:
                         idx--;
                         if (idx < 0) idx = choices.Count - 1;
