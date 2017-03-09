@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace credential_manager.Utilities
 {
+    /// <summary>
+    /// 3/9/17 Changed filtering behavior
+    /// </summary>
     public class StringChoice
     {
         public static object Read(Dictionary<string, object> choices)
@@ -15,9 +16,6 @@ namespace credential_manager.Utilities
             return choices[selected];
         }
 
-        /// <summary>
-        /// shortcut method
-        /// </summary>
         public static string Read(List<string> choices)
         {
             return (new Utilities.StringChoice(choices).ReadInternal());
@@ -25,11 +23,7 @@ namespace credential_manager.Utilities
 
         public static string Read(List<string> choices, string defaultChoice)
         {
-            int selected = -1;
-            for (int count = 0; count < choices.Count; count++)
-                if (defaultChoice == choices[count])
-                    selected = count;
-
+            int selected = choices.FindIndex(s => string.Compare(s, defaultChoice, true, System.Globalization.CultureInfo.CurrentCulture) == 0);
             if (selected < 0)
                 return Read(choices);
             else
@@ -46,6 +40,8 @@ namespace credential_manager.Utilities
 
         int idx = -1;                       //currently selected index
         string sMatch = string.Empty;       //last successful match, or empty.
+
+        bool Matching { get { return !string.IsNullOrEmpty(sMatch); } }
 
         public StringChoice(List<string> choices)
         {
@@ -85,29 +81,55 @@ namespace credential_manager.Utilities
                 {
                     case ConsoleKey.DownArrow:
                     case ConsoleKey.RightArrow:
-                        idx++;
-                        if (idx >= choices.Count) idx = 0;
-                        sMatch = string.Empty;  //reset match
+                        if (Matching)
+                        {
+                            if (choices[idx + 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
+                                idx++;
+                            else
+                                idx = choices.FindIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+                        }
+                        else
+                        {
+                            idx++;
+                            if (idx >= choices.Count) idx = 0;
+                        }
                         break;
 
                     case ConsoleKey.UpArrow:
                     case ConsoleKey.LeftArrow:
-                        idx--;
-                        if (idx < 0) idx = choices.Count - 1;
-                        sMatch = string.Empty;  //reset match
+                        if (Matching)
+                        {
+                            if (choices[idx - 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
+                                idx--;
+                            else
+                                idx = choices.FindLastIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+                        }
+                        else
+                        {
+                            idx--;
+                            if (idx < 0) idx = choices.Count - 1;
+                        }
                         break;
 
                     case ConsoleKey.Escape:
-                        if (idx > -1)
-                            Console.Write(new String(' ', choices[idx].Length)); //reset cursor
-                        idx = -1;
+                        if (Matching)
+                        {
+                            sMatch = string.Empty;  //stop matching
+                            ch = 0;                 //override escape
+                        }
+                        else
+                        {
+                            if (idx > -1)
+                                Console.Write(new String(' ', choices[idx].Length)); //reset cursor
+                            idx = -1;
+                        }
                         break;
 
                     case ConsoleKey.Backspace:
                     case ConsoleKey.Delete:
                         if (sMatch.Length > 0)
                         {
-                            AttemptMatch(sMatch.Substring(0, sMatch.Length - 1));
+                            TryMatch(sMatch.Substring(0, sMatch.Length - 1));
                             if (sMatch.Length == 0) idx = -1;  //expected behavior: nothing selected
                         }
                         break;
@@ -115,7 +137,7 @@ namespace credential_manager.Utilities
                     default:
                         if (IsPrintable(keyInfo.KeyChar))
                         {
-                            AttemptMatch(sMatch + keyInfo.KeyChar);
+                            TryMatch(sMatch + keyInfo.KeyChar);
                         }
                         break;
                 }
@@ -141,7 +163,7 @@ namespace credential_manager.Utilities
         /// Attempt a match with the given string.
         /// If successful, adjust current match string and selected index.
         /// </summary>
-        private void AttemptMatch(string tryMatch)
+        private void TryMatch(string tryMatch)
         {
             int matchIdx = choices.FindIndex(s => s.StartsWith(tryMatch, true, System.Globalization.CultureInfo.CurrentCulture));
             if (matchIdx > -1)
