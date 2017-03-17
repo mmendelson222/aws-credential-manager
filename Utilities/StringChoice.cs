@@ -83,7 +83,9 @@ namespace credential_manager.Utilities
                     case ConsoleKey.RightArrow:
                         if (Matching)
                         {
-                            if (choices[idx + 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
+                            if (idx == choices.Count - 1)   //end of overall list.  special case.
+                                idx = choices.FindIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+                            else if (choices[idx + 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
                                 idx++;
                             else
                                 idx = choices.FindIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
@@ -99,7 +101,9 @@ namespace credential_manager.Utilities
                     case ConsoleKey.LeftArrow:
                         if (Matching)
                         {
-                            if (choices[idx - 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
+                            if (idx == 0)   //start of overall list.  special case.
+                                idx = choices.FindLastIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
+                            else if (choices[idx - 1].StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture))
                                 idx--;
                             else
                                 idx = choices.FindLastIndex(s => s.StartsWith(sMatch, true, System.Globalization.CultureInfo.CurrentCulture));
