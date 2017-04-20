@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
-namespace credential_manager.Utilities
+namespace Utilities
 {
     /// <summary>
     /// 3/9/17 Changed filtering behavior
+    /// 4/20/14 Added integer parsing, YesNo etc.
     /// </summary>
     public class StringChoice
     {
@@ -23,6 +25,7 @@ namespace credential_manager.Utilities
 
         public static string Read(List<string> choices, string defaultChoice)
         {
+            if (defaultChoice == null) defaultChoice = string.Empty;
             int selected = choices.FindIndex(s => string.Compare(s, defaultChoice, true, System.Globalization.CultureInfo.CurrentCulture) == 0);
             if (selected < 0)
                 return Read(choices);
@@ -33,6 +36,49 @@ namespace credential_manager.Utilities
         public static string Read(List<string> choices, int defaultChoice)
         {
             return (new Utilities.StringChoice(choices) { idx = defaultChoice }).ReadInternal();
+        }
+
+        public static int ReadInteger()
+        {
+            var b = new StringBuilder();
+            var key = new ConsoleKeyInfo();
+            while (key.Key != ConsoleKey.Enter && key.Key != ConsoleKey.Escape)
+            {
+                key = Console.ReadKey(true);
+                if (key.Key == ConsoleKey.Enter)
+                {
+                }
+                else if (key.Key == ConsoleKey.Escape)
+                {
+                    Console.Write(new string('\b', b.Length));
+                    Console.Write(new string(' ', b.Length));
+                    Console.Write(new string('\b', b.Length));
+                    b.Length = 0;
+                }
+                else
+                {
+                    if (key.Key == ConsoleKey.Backspace && b.Length > 0)
+                    {
+                        b.Length--;
+                        Console.Write("\b \b");
+                    }
+                    else if ("0123456789".Contains(key.KeyChar))
+                    {
+                        b.Append(key.KeyChar);
+                        Console.Write(key.KeyChar);
+                    }
+                    else
+                    {
+                        System.Media.SystemSounds.Beep.Play();
+                    }
+                }
+            }
+
+            int i;
+            if (!int.TryParse(b.ToString(), out i))
+                return -1;
+            else
+                return i;
         }
 
         List<string> choices;
@@ -199,6 +245,46 @@ namespace credential_manager.Utilities
         private static bool IsPrintable(char c)
         {
             return c >= ' ' && c <= '~';
+        }
+
+        /// <summary>
+        /// just tell us if this is a quit character.
+        /// </summary>
+        internal static bool IsQuit(char c)
+        {
+            return ((new char[] { 'x', 'q' }).Contains(c.ToString().ToLower()[0]));
+        }
+
+        /// <summary>
+        /// Prompt the user and accept y/n.  Return boolean. 
+        /// </summary>
+        internal static bool YesNo(string prompt)
+        {
+            do
+            {
+                Console.Write(prompt + " (y/n) ");
+                var keyInfo = Console.ReadKey(false);
+                switch (keyInfo.KeyChar.ToString().ToLower()[0])
+                {
+                    case 'y': Console.WriteLine(); return true;
+                    case 'n': Console.WriteLine(); return false;
+                }
+            } while (true);
+        }
+
+        /// <summary>
+        /// check KeyAvailable for a character.  Continue, cancel (if x/q) or pause with option to cancel.
+        /// </summary>
+        internal static bool CheckForCancel()
+        {
+            bool canceled = false;
+            if (Console.KeyAvailable)
+            {
+                canceled = StringChoice.IsQuit(Console.ReadKey(true).KeyChar); //if user pressed x or q, just cancel.
+                if (!canceled)
+                    canceled = Utilities.StringChoice.YesNo("Pausing operation.  Cancel? ");       //or ask poliely.
+            }
+            return canceled;
         }
     }
 }

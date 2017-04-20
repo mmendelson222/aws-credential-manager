@@ -44,14 +44,6 @@ namespace credential_manager
                         Console.WriteLine("P: Push   to a Named Profile");
                         Console.WriteLine("W: Whois  the associated IAM user");
                         Console.WriteLine("X: Exit\n");
-
-                        //Console.WriteLine("A: Add    stored credential");
-                        //Console.WriteLine("R: Remove stored credential");
-                        //Console.WriteLine("U: Update stored credential");
-                        //Console.WriteLine("S: Set    default credential");
-                        //Console.WriteLine("P: Push   to a Named Profile");
-                        //Console.WriteLine("W: Whois  the associated IAM user");
-                        //Console.WriteLine("X: Exit\n");
                     }
 
                     var keyInfo = Console.ReadKey(true);
