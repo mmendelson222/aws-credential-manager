@@ -22,6 +22,7 @@ namespace credential_manager.Operations
                 GetUserResponse response = iamClient.GetUser();
                 meta.UserArn = response.User.Arn;
                 meta.UserName = response.User.UserName;
+                meta.AccountID = Regex.Match(meta.UserArn, @"(\d{12})").Groups[1].ToString();
             }
             catch (AmazonIdentityManagementServiceException e)
             {
@@ -30,6 +31,7 @@ namespace credential_manager.Operations
                 {
                     //get the ARN anyway, from the error message
                     meta.UserArn = match.ToString();
+                    meta.AccountID = match.Groups[1].ToString();
                     meta.UserName = match.Groups[2].ToString();
                 }
                 else
@@ -85,6 +87,7 @@ namespace credential_manager.Operations
 
         internal class UserMetadata
         {
+            internal string AccountID;
             internal string UserName;
             internal string UserArn;
             internal string AccountAlias;
