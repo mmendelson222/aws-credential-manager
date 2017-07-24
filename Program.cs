@@ -47,7 +47,12 @@ namespace credential_manager
                     }
 
                     var keyInfo = Console.ReadKey(true);
-                    input = keyInfo.Key.ToString().ToLower()[0];
+                    string sKey = keyInfo.Key.ToString();
+                    if (sKey.Length > 1)
+                        input = char.MinValue;  //omit non-characters (e.g. F1, Escape)
+                    else
+                        input = sKey.ToLower()[0];
+
                     showPrompt = true;
 
                     switch (input)
@@ -75,14 +80,15 @@ namespace credential_manager
                             {
                                 Console.Write("Rename credential (use arrows or type): ");
                                 string selected = Utilities.StringChoice.Read(names);
-                                var newName = ReadLine("Rename to: "); if (newName.Length == 0) break;
-                                if (!string.IsNullOrEmpty(selected))
-                                {
-                                    //create new one credential, delete old one.
-                                    var olcCredential = ProfileManager.GetAWSCredentials(selected).GetCredentials();
-                                    ProfileManager.RegisterProfile(newName, olcCredential.AccessKey, olcCredential.SecretKey);
-                                    ProfileManager.UnregisterProfile(selected);
-                                }
+                                if (string.IsNullOrEmpty(selected)) break;
+
+                                var newName = ReadLine("Rename to: ");
+                                if (string.IsNullOrEmpty(newName)) break;
+
+                                //create new one credential, delete old one.
+                                var olcCredential = ProfileManager.GetAWSCredentials(selected).GetCredentials();
+                                ProfileManager.RegisterProfile(newName, olcCredential.AccessKey, olcCredential.SecretKey);
+                                ProfileManager.UnregisterProfile(selected);
                                 break;
                             }
                         case 'u':
