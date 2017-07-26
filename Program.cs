@@ -14,6 +14,7 @@ namespace credential_manager
     {
         static string defaultCredName;
         const string MY_URL = "http://bit.ly/2kJ2J42";
+        enum eListingType { standard, concise, showall };
 
         static void Main(string[] args)
         {
@@ -23,13 +24,14 @@ namespace credential_manager
                 bool showPrompt = true;
                 List<string> names = null;
                 bool showCredentialSecret = false;
+                eListingType listingType = eListingType.standard;
 
                 do
                 {
                     if (showPrompt)
                     {
                         Console.WriteLine();
-                        names = ListCredentials(showCredentialSecret);
+                        names = ListCredentials(listingType);
 
                         //Console.WriteLine();
                         //Console.WriteLine("Stored credentials: Add, Remove, Update, rEname");
@@ -157,7 +159,13 @@ namespace credential_manager
                                 break;
                             }
 
+                        case 'c':
+                        //concise listing
+
+
                         case 'l':
+                            listingType++;
+                            listingType = (eListingType)((int)listingType % Enum.GetValues(typeof(eListingType)).Length);
                             if (keyInfo.Modifiers == ConsoleModifiers.Control)
                                 showCredentialSecret = !showCredentialSecret;
                             break;
@@ -259,14 +267,15 @@ namespace credential_manager
             return strOutput;
         }
 
-        private static List<string> ListCredentials(bool showall)
+        private static List<string> ListCredentials(eListingType listingType)
         {
             List<string> sortedNames;
             sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
             int maxLength = sortedNames.Max(n => n.Length);
 
-            string fmt1 = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}", maxLength, new string(' ', maxLength));
-            string fmt2 = string.Format("{{0,-{0}}} {{1}} {{2}}", maxLength);
+            string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}", maxLength, new string(' ', maxLength));
+            string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}", maxLength);
+            string fmtConcise = string.Format("{{0,-{0}}} {{1}}", maxLength);
 
             if (sortedNames.Count == 0)
             {
@@ -277,6 +286,9 @@ namespace credential_manager
                 var currentDefaultCredential = GetDefaultCredential();
 
                 Console.WriteLine("=== Stored Credentials ===");
+                string consiseListingPrefix = string.Empty;
+                int consiseGroupCount = 0;
+
                 foreach (var profileName in sortedNames)
                 {
                     var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
@@ -291,10 +303,36 @@ namespace credential_manager
                         defaultIndicator = "(default)";
                     }
 
-                    if (showall)
-                        Console.WriteLine(string.Format(fmt1, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
-                    else
-                        Console.WriteLine(string.Format(fmt2, profileName, creds.AccessKey, defaultIndicator));
+                    switch (listingType)
+                    {
+                        case eListingType.concise:
+                            var prefix = profileName.Split('-')[0];
+                            if (prefix != consiseListingPrefix)
+                            {
+                                if (!string.IsNullOrEmpty(consiseListingPrefix))
+                                    Console.WriteLine(fmtConcise, consiseListingPrefix, consiseGroupCount);
+                                consiseGroupCount = 0;
+                            }
+                            consiseGroupCount++;
+                            consiseListingPrefix = prefix;
+                            break;
+
+                        case eListingType.standard:
+                            Console.WriteLine(fmtStandard, profileName, creds.AccessKey, defaultIndicator);
+                            break;
+                        case eListingType.showall:
+                            Console.WriteLine(string.Format(fmtShowAll, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
+                            break;
+                    }
+                }
+
+                switch (listingType)
+                {
+                    case eListingType.concise:
+                        Console.WriteLine(fmtConcise, consiseListingPrefix, consiseGroupCount);
+                        if (!string.IsNullOrEmpty(currentDefaultCredential))
+                            Console.WriteLine("Default: {0}\n", defaultCredName);
+                       break;
                 }
             }
             return sortedNames;
