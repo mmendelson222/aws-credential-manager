@@ -269,13 +269,8 @@ namespace credential_manager
 
         private static List<string> ListCredentials(eListingType listingType)
         {
-            List<string> sortedNames;
-            sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
-            int maxLength = sortedNames.Max(n => n.Length);
-
-            string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}", maxLength, new string(' ', maxLength));
-            string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}", maxLength);
-            string fmtConcise = string.Format("{{0,-{0}}} {{1}}", maxLength);
+            Console.WriteLine();
+            List<string> sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
 
             if (sortedNames.Count == 0)
             {
@@ -283,11 +278,22 @@ namespace credential_manager
             }
             else
             {
+                int maxLength = sortedNames.Max(n => n.Length);
+                string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}\r\n", maxLength, new string(' ', maxLength));
+                string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}\r\n", maxLength);
+                string fmtConcise = string.Format("{{0,-{0}}}", maxLength);
+
+                int columns = Console.WindowWidth / (maxLength + 1);
+                int row = 0;
+                int rows = (int)Math.Ceiling((double)sortedNames.Count / (double)columns);
+                StringBuilder[] sbRows = new StringBuilder[rows];
+
+                StringBuilder sbOut = new StringBuilder();
+
                 var currentDefaultCredential = GetDefaultCredential();
 
                 Console.WriteLine("=== Stored Credentials ===");
-                string consiseListingPrefix = string.Empty;
-                int consiseGroupCount = 0;
+
 
                 foreach (var profileName in sortedNames)
                 {
@@ -300,28 +306,23 @@ namespace credential_manager
                     else if (creds.AccessKey == currentDefaultCredential)
                     {
                         defaultCredName = profileName;
-                        defaultIndicator = "(default)";
+                        defaultIndicator = listingType == eListingType.concise ? "*" : "(default)";
                     }
 
                     switch (listingType)
                     {
                         case eListingType.concise:
-                            var prefix = profileName.Split('-')[0];
-                            if (prefix != consiseListingPrefix)
-                            {
-                                if (!string.IsNullOrEmpty(consiseListingPrefix))
-                                    Console.WriteLine(fmtConcise, consiseListingPrefix, consiseGroupCount);
-                                consiseGroupCount = 0;
-                            }
-                            consiseGroupCount++;
-                            consiseListingPrefix = prefix;
+                            if (row == 0) sbOut.AppendLine();
+                            if (sbRows[row] == null) sbRows[row] = new StringBuilder();
+                            sbRows[row].AppendFormat(fmtConcise, profileName + defaultIndicator);
+                            row = ++row % rows;
                             break;
 
                         case eListingType.standard:
-                            Console.WriteLine(fmtStandard, profileName, creds.AccessKey, defaultIndicator);
+                            sbOut.AppendFormat(fmtStandard, profileName, creds.AccessKey, defaultIndicator);
                             break;
                         case eListingType.showall:
-                            Console.WriteLine(string.Format(fmtShowAll, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
+                            sbOut.AppendFormat(string.Format(fmtShowAll, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
                             break;
                     }
                 }
@@ -329,10 +330,14 @@ namespace credential_manager
                 switch (listingType)
                 {
                     case eListingType.concise:
-                        Console.WriteLine(fmtConcise, consiseListingPrefix, consiseGroupCount);
-                        if (!string.IsNullOrEmpty(currentDefaultCredential))
-                            Console.WriteLine("Default: {0}\n", defaultCredName);
-                       break;
+                        foreach (var sb in sbRows)
+                            Console.WriteLine(sb);
+                        Console.WriteLine();
+                        break;
+
+                    default:
+                        Console.WriteLine(sbOut);
+                        break;
                 }
             }
             return sortedNames;
