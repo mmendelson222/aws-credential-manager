@@ -34,12 +34,6 @@ namespace credential_manager
                         Console.WriteLine();
                         names = ListCredentials(listingType);
 
-                        //Console.WriteLine();
-                        //Console.WriteLine("Stored credentials: Add, Remove, Update, rEname");
-                        //Console.WriteLine("Named profiles:     Set Default, Push");
-                        //Console.WriteLine("Whois");
-                        //Console.WriteLine("X: Exit\n");
-
                         Console.WriteLine("A: Add    stored credential\tR: Remove stored credential");
                         Console.WriteLine("U: Update stored credential\tE: Rename stored credential");
                         Console.WriteLine("S: Set    default credential");
@@ -327,7 +321,7 @@ namespace credential_manager
         {
             var currentDefaultCredential = GetDefaultCredential();
             int maxLength = sortedNames.Max(n => n.Length);
-            string fmtConcise = string.Format("{{0,-{0}}}", maxLength);
+            string fmtConcise = string.Format("{{0,-{0}}}", maxLength + 1);
 
             int columns = Console.WindowWidth / (maxLength + 1);
             int row = 0;
