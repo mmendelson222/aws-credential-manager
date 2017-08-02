@@ -128,6 +128,11 @@ namespace Utilities
         }
 
         #region private static methods
+        internal static void WriteWithHighlighting(string s)
+        {
+            WriteWithHighlighting(s, s.Length);
+        }
+
         /// <summary>
         /// write the first "length" characters reversed.
         /// </summary>

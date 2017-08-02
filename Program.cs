@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-
+using System.Text.RegularExpressions;
+using Utilities;
 
 namespace credential_manager
 {
@@ -282,6 +283,10 @@ namespace credential_manager
                 string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}\r\n", maxLength, new string(' ', maxLength));
                 string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}\r\n", maxLength);
                 string fmtConcise = string.Format("{{0,-{0}}}", maxLength);
+                string fmtConciseDefault = "[{0}]";
+
+                //single out default for highlighting (concise only)
+                Regex isDefault = new Regex(@"\[(.*?)\]");
 
                 int columns = Console.WindowWidth / (maxLength + 1);
                 int row = 0;
@@ -293,8 +298,6 @@ namespace credential_manager
                 var currentDefaultCredential = GetDefaultCredential();
 
                 Console.WriteLine("=== Stored Credentials ===");
-
-
                 foreach (var profileName in sortedNames)
                 {
                     var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
@@ -314,7 +317,10 @@ namespace credential_manager
                         case eListingType.concise:
                             if (row == 0) sbOut.AppendLine();
                             if (sbRows[row] == null) sbRows[row] = new StringBuilder();
-                            sbRows[row].AppendFormat(fmtConcise, profileName + defaultIndicator);
+                            if (string.IsNullOrEmpty(defaultIndicator))
+                                sbRows[row].AppendFormat(fmtConcise, profileName);
+                            else
+                                sbRows[row].AppendFormat(fmtConciseDefault,profileName);
                             row = ++row % rows;
                             break;
 
@@ -331,7 +337,23 @@ namespace credential_manager
                 {
                     case eListingType.concise:
                         foreach (var sb in sbRows)
-                            Console.WriteLine(sb);
+                        {
+                            var s = sb.ToString();
+                            var match = isDefault.Match(s);
+                            if (match.Length == 0)
+                            {
+                                Console.WriteLine(sb);
+                            }
+                            else
+                            {
+                                string deflt = match.Value.Substring(1, match.Value.Length - 2);
+                                Console.Write(s.Substring(0, match.Index));
+                                StringChoice.WriteWithHighlighting(deflt);
+                                Console.Write(new string(' ', maxLength - deflt.Length));
+                                Console.WriteLine(s.Substring(match.Index + deflt.Length + 2));
+                            }
+                             
+                        }
                         Console.WriteLine();
                         break;
 
