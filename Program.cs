@@ -15,7 +15,7 @@ namespace credential_manager
     {
         static string defaultCredName;
         const string MY_URL = "http://bit.ly/2kJ2J42";
-        enum eListingType { standard, concise, showall };
+        enum eListingType { concise, standard, showall };
 
         static void Main(string[] args)
         {
@@ -25,7 +25,7 @@ namespace credential_manager
                 bool showPrompt = true;
                 List<string> names = null;
                 bool showCredentialSecret = false;
-                eListingType listingType = eListingType.standard;
+                eListingType listingType = eListingType.concise;
 
                 do
                 {
@@ -40,9 +40,8 @@ namespace credential_manager
                         //Console.WriteLine("Whois");
                         //Console.WriteLine("X: Exit\n");
 
-                        Console.WriteLine("A: Add    stored credential");
-                        Console.WriteLine("R: Remove stored credential");
-                        Console.WriteLine("U: Update stored credential");
+                        Console.WriteLine("A: Add    stored credential\tR: Remove stored credential");
+                        Console.WriteLine("U: Update stored credential\tE: Rename stored credential");
                         Console.WriteLine("S: Set    default credential");
                         Console.WriteLine("P: Push   to a Named Profile");
                         Console.WriteLine("W: Whois  the associated IAM user");
@@ -272,97 +271,103 @@ namespace credential_manager
         {
             Console.WriteLine();
             List<string> sortedNames = ProfileManager.ListProfileNames().OrderBy(p => p).ToList();
+            Console.WriteLine("=== Stored Credentials ===");
 
             if (sortedNames.Count == 0)
             {
                 Console.WriteLine("No credentials are currently stored.  Type A to add one.");
             }
+            else if (listingType == eListingType.concise)
+            {
+                ListConcise(sortedNames);
+            }
             else
             {
-                int maxLength = sortedNames.Max(n => n.Length);
-                string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}\r\n", maxLength, new string(' ', maxLength));
-                string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}\r\n", maxLength);
-                string fmtConcise = string.Format("{{0,-{0}}}", maxLength);
-                string fmtConciseDefault = "[{0}]";
+                ListStandard(listingType, sortedNames);
+            }
+            return sortedNames;
+        }
 
-                //single out default for highlighting (concise only)
-                Regex isDefault = new Regex(@"\[(.*?)\]");
+        private static void ListStandard(eListingType listingType, List<string> sortedNames)
+        {
+            var currentDefaultCredential = GetDefaultCredential();
+            int maxLength = sortedNames.Max(n => n.Length);
+            string fmtShowAll = string.Format("{{0,-{0}}} {{1}}\n{1} {{2}} {{3}}\r\n", maxLength, new string(' ', maxLength));
+            string fmtStandard = string.Format("{{0,-{0}}} {{1}} {{2}}\r\n", maxLength);
 
-                int columns = Console.WindowWidth / (maxLength + 1);
-                int row = 0;
-                int rows = (int)Math.Ceiling((double)sortedNames.Count / (double)columns);
-                StringBuilder[] sbRows = new StringBuilder[rows];
-
-                StringBuilder sbOut = new StringBuilder();
-
-                var currentDefaultCredential = GetDefaultCredential();
-
-                Console.WriteLine("=== Stored Credentials ===");
-                foreach (var profileName in sortedNames)
+            StringBuilder sbOut = new StringBuilder();
+            foreach (var profileName in sortedNames)
+            {
+                var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
+                string defaultIndicator = string.Empty;
+                if (string.Compare(profileName, "default", true) == 0)
                 {
-                    var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
-                    string defaultIndicator = string.Empty;
-                    if (string.Compare(profileName, "default", true) == 0)
-                    {
-                        defaultIndicator = string.Format("Careful!\n{0} See note on defaults: {1}", new string(' ', maxLength), MY_URL);
-                    }
-                    else if (creds.AccessKey == currentDefaultCredential)
-                    {
-                        defaultCredName = profileName;
-                        defaultIndicator = listingType == eListingType.concise ? "*" : "(default)";
-                    }
-
-                    switch (listingType)
-                    {
-                        case eListingType.concise:
-                            if (row == 0) sbOut.AppendLine();
-                            if (sbRows[row] == null) sbRows[row] = new StringBuilder();
-                            if (string.IsNullOrEmpty(defaultIndicator))
-                                sbRows[row].AppendFormat(fmtConcise, profileName);
-                            else
-                                sbRows[row].AppendFormat(fmtConciseDefault,profileName);
-                            row = ++row % rows;
-                            break;
-
-                        case eListingType.standard:
-                            sbOut.AppendFormat(fmtStandard, profileName, creds.AccessKey, defaultIndicator);
-                            break;
-                        case eListingType.showall:
-                            sbOut.AppendFormat(string.Format(fmtShowAll, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
-                            break;
-                    }
+                    defaultIndicator = string.Format("Careful!\n{0} See note on defaults: {1}", new string(' ', maxLength), MY_URL);
+                }
+                else if (creds.AccessKey == currentDefaultCredential)
+                {
+                    defaultCredName = profileName;
+                    defaultIndicator = "(default)";
                 }
 
                 switch (listingType)
                 {
-                    case eListingType.concise:
-                        foreach (var sb in sbRows)
-                        {
-                            var s = sb.ToString();
-                            var match = isDefault.Match(s);
-                            if (match.Length == 0)
-                            {
-                                Console.WriteLine(sb);
-                            }
-                            else
-                            {
-                                string deflt = match.Value.Substring(1, match.Value.Length - 2);
-                                Console.Write(s.Substring(0, match.Index));
-                                StringChoice.WriteWithHighlighting(deflt);
-                                Console.Write(new string(' ', maxLength - deflt.Length));
-                                Console.WriteLine(s.Substring(match.Index + deflt.Length + 2));
-                            }
-                             
-                        }
-                        Console.WriteLine();
+                    case eListingType.standard:
+                        sbOut.AppendFormat(fmtStandard, profileName, creds.AccessKey, defaultIndicator);
                         break;
-
-                    default:
-                        Console.WriteLine(sbOut);
+                    case eListingType.showall:
+                        sbOut.AppendFormat(string.Format(fmtShowAll, profileName, creds.AccessKey, creds.SecretKey, defaultIndicator));
                         break;
                 }
             }
-            return sortedNames;
+            Console.WriteLine(sbOut);
+        }
+
+        private static void ListConcise(List<string> sortedNames)
+        {
+            var currentDefaultCredential = GetDefaultCredential();
+            int maxLength = sortedNames.Max(n => n.Length);
+            string fmtConcise = string.Format("{{0,-{0}}}", maxLength);
+
+            int columns = Console.WindowWidth / (maxLength + 1);
+            int row = 0;
+            int rows = (int)Math.Ceiling((double)sortedNames.Count / (double)columns);
+            Regex regDefault = null;  //for finding the default name in the output string.
+
+            StringBuilder[] sbRows = new StringBuilder[rows];
+            foreach (var profileName in sortedNames)
+            {
+                if (sbRows[row] == null) sbRows[row] = new StringBuilder();
+                var creds = ProfileManager.GetAWSCredentials(profileName).GetCredentials();
+                if (creds.AccessKey == currentDefaultCredential)
+                    regDefault = new Regex(string.Format(@"(\r|\n|^| )({0})(\r|\n|$| )", profileName));  //single out default for highlighting 
+                sbRows[row].AppendFormat(fmtConcise, profileName);
+                row = ++row % rows;
+            }
+
+            string s = string.Join("\r\n", Array.ConvertAll(sbRows, r => r.ToString()));  //join all rows into a single string
+
+            if (regDefault == null)
+            {
+                Console.WriteLine(s);
+            }
+            else
+            {
+                var match = regDefault.Match(s);
+                if (match.Length == 0)
+                {
+                    Console.WriteLine(s);
+                }
+                else
+                {
+                    string deflt = match.Groups[2].Value;
+                    int pos = match.Index + match.Groups[1].Length;
+                    Console.Write(s.Substring(0, pos));
+                    StringChoice.WriteWithHighlighting(deflt);
+                    Console.WriteLine(s.Substring(pos + deflt.Length));
+                }
+            }
+            Console.WriteLine();
         }
 
         private static string ReadRegion()
